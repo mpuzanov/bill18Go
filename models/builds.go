@@ -18,7 +18,7 @@ type Builds struct {
 }
 
 //GetBuilds Возвращаем список домов по заданной улице
-func GetBuilds(streetName string) (*Builds, error) {
+func (db *DB) GetBuilds(streetName string) (*Builds, error) {
 	rows, err := db.Query("k_show_build @street_name1",
 		sql.Named("street_name1", streetName))
 	if err != nil {
@@ -26,7 +26,7 @@ func GetBuilds(streetName string) (*Builds, error) {
 	}
 	defer rows.Close()
 
-	builds := new(Builds)
+	builds := Builds{}
 	builds.StreetName = streetName
 	for rows.Next() {
 		var build Build
@@ -40,5 +40,5 @@ func GetBuilds(streetName string) (*Builds, error) {
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	return builds, nil
+	return &builds, nil
 }

@@ -1,0 +1,13 @@
+#Уровень отладки. Влияет на содержимое сообщений в логе
+#Допустимые значения: DEBUG INFO ERROR
+loglevel: DEBUG
+#Формируем JSON с отступами
+isPrettyJSON: true
+
+#Параметры подключения к БД
+sqlconnect:
+  server: "adm"
+  port  : 1433
+  user     : "sa"
+  password : "123"
+  database : "kv_all"

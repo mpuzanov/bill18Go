@@ -5,36 +5,67 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
+	"strconv"
 
-	"./models"
+	"github.com/mpuzanov/bill18go/models"
+
 	_ "github.com/denisenkom/go-mssqldb"
 )
 
-var (
-	server       = "adm"
-	port         = 1433
-	user         = "sa"
-	password     = "123"
-	database     = "kv_all"
-	isPrettyJSON = true
+const (
+	configFileName = "conf.yaml"
+	statfile       = "tmp/stat.json"
 )
 
+var (
+	cfg          *Config
+	isPrettyJSON bool
+)
+
+//Env Интерфейс для вызова функций sql
+type Env struct {
+	db models.Datastore
+}
+
 func main() {
+	//go run .
+	//go run main.go config.go
 
-	// Build connection string
-	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
-		server, user, password, port, database)
+	//загружаем конфиг
+	cfg, err := reloadConfig(configFileName)
+	if err != nil {
+		if err != errNotModified {
+			log.Fatalf("Не удалось загрузить %s: %s", configFileName, err)
+		}
+	}
+	isPrettyJSON = cfg.IsPrettyJSON
+	fmt.Println(isPrettyJSON)
 
-	models.InitDB(connString)
+	//connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;", cfg.Server, cfg.User, cfg.Password, cfg.Port, cfg.Database)
+	connString := fmt.Sprintf("sqlserver://%s:%s@%s:%d?database=%s",
+		cfg.SQLConnect.User, cfg.SQLConnect.Password, cfg.SQLConnect.Server, cfg.SQLConnect.Port, cfg.SQLConnect.Database)
+
+	db, err := models.GetInitDB(connString)
+	if err != nil {
+		panic(err)
+	}
+	env := &Env{db}
 
 	fmt.Println("Listening on port :8080")
 	http.HandleFunc("/", homePage)
-	http.HandleFunc("/streets", streetIndex)
-	http.HandleFunc("/builds", buildIndex)
-	http.HandleFunc("/flats", flatsIndex)
-	http.HandleFunc("/lics", licsIndex)
-	http.HandleFunc("/infoLic", infoLicIndex)
+	http.HandleFunc("/streets", env.streetIndex)
+	http.HandleFunc("/builds", env.buildIndex)
+	http.HandleFunc("/flats", env.flatsIndex)
+	http.HandleFunc("/lics", env.licsIndex)
+	http.HandleFunc("/infoLic", env.infoLicIndex)
+	http.HandleFunc("/infoDataCounter", env.infoDataCounter)
+
+	http.HandleFunc("/infoDataCounterValue", env.infoDataCounterValue)
+	http.HandleFunc("/infoDataValue", env.infoDataValue)
+	http.HandleFunc("/infoDataPaym", env.infoDataPaym)
+
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -61,7 +92,7 @@ func getJSONResponse(w http.ResponseWriter, r *http.Request, data interface{}) {
 	if err != nil {
 		// handle error
 	}
-	if isPrettyJSON {
+	if isPrettyJSON == true {
 		jsData, err = prettyprint(jsData)
 		if err != nil {
 			// handle error
@@ -71,21 +102,21 @@ func getJSONResponse(w http.ResponseWriter, r *http.Request, data interface{}) {
 	w.Write(jsData)
 }
 
-func streetIndex(w http.ResponseWriter, r *http.Request) {
-	streets, err := models.AllStreets()
+func (env *Env) streetIndex(w http.ResponseWriter, r *http.Request) {
+	data, err := env.db.GetAllStreets()
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
-	getJSONResponse(w, r, streets)
+	getJSONResponse(w, r, data)
 }
 
-func buildIndex(w http.ResponseWriter, r *http.Request) {
+func (env *Env) buildIndex(w http.ResponseWriter, r *http.Request) {
 	streetName := r.FormValue("street_name")
 	if streetName == "" {
 		streetName = "1-я Донская ул."
 	}
-	builds, err := models.GetBuilds(streetName)
+	data, err := env.db.GetBuilds(streetName)
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 		return
@@ -93,10 +124,10 @@ func buildIndex(w http.ResponseWriter, r *http.Request) {
 	// for _, build := range builds.DataBuilds {
 	// 	fmt.Printf("%s, %s, %s\n", builds.Street_name, build.Nom_dom, build.Nom_dom_sort)
 	// }
-	getJSONResponse(w, r, builds)
+	getJSONResponse(w, r, data)
 }
 
-func flatsIndex(w http.ResponseWriter, r *http.Request) {
+func (env *Env) flatsIndex(w http.ResponseWriter, r *http.Request) {
 	streetName := r.FormValue("street_name")
 	nomDom := r.FormValue("nom_dom")
 	if streetName == "" {
@@ -105,7 +136,7 @@ func flatsIndex(w http.ResponseWriter, r *http.Request) {
 	if nomDom == "" {
 		nomDom = "6"
 	}
-	flats, err := models.GetFlats(streetName, nomDom)
+	data, err := env.db.GetFlats(streetName, nomDom)
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 		return
@@ -113,10 +144,10 @@ func flatsIndex(w http.ResponseWriter, r *http.Request) {
 	// for _, flat := range flats {
 	// 	fmt.Fprintf(w, "%s, %s, %s, %s\n", streetName, nomDom, flat.Nom_kvr, flat.Nom_kvr_sort)
 	// }
-	getJSONResponse(w, r, flats)
+	getJSONResponse(w, r, data)
 }
 
-func licsIndex(w http.ResponseWriter, r *http.Request) {
+func (env *Env) licsIndex(w http.ResponseWriter, r *http.Request) {
 	streetName := r.FormValue("street_name")
 	nomDom := r.FormValue("nom_dom")
 	nomKvr := r.FormValue("nom_kvr")
@@ -129,22 +160,91 @@ func licsIndex(w http.ResponseWriter, r *http.Request) {
 	if nomKvr == "" {
 		nomKvr = "2"
 	}
-	lics, err := models.GetKvrLic(streetName, nomDom, nomKvr)
+	data, err := env.db.GetKvrLic(streetName, nomDom, nomKvr)
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
-	getJSONResponse(w, r, lics)
+	getJSONResponse(w, r, data)
 }
 
-func infoLicIndex(w http.ResponseWriter, r *http.Request) {
-	occ := r.FormValue("occ")
-	if occ == "" {
-		occ = "0"
+func (env *Env) infoLicIndex(w http.ResponseWriter, r *http.Request) {
+	parOcc := r.FormValue("occ")
+	if parOcc == "" {
+		parOcc = "0"
 	}
-	fmt.Printf("FormValue: %s\n", occ)
-	data, err := models.GetDataOcc(occ)
+	//fmt.Printf("FormParams infoLicIndex: %s\n", parOcc)
+	occ, _ := strconv.Atoi(parOcc)
+
+	data, err := env.db.GetDataOcc(occ)
 	if err != nil {
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+	getJSONResponse(w, r, data)
+}
+
+func (env *Env) infoDataCounter(w http.ResponseWriter, r *http.Request) {
+	parOcc := r.FormValue("occ")
+	if parOcc == "" {
+		parOcc = "0"
+	}
+	//fmt.Printf("FormParams infoDataCounter: %s\n", parOcc)
+	occ, _ := strconv.Atoi(parOcc)
+
+	data, err := env.db.GetCounterByOcc(occ)
+	if err != nil {
+		fmt.Printf("infoDataCounter: %s\n", err)
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+	getJSONResponse(w, r, data)
+}
+
+func (env *Env) infoDataCounterValue(w http.ResponseWriter, r *http.Request) {
+	parOcc := r.FormValue("occ")
+	if parOcc == "" {
+		parOcc = "0"
+	}
+	//fmt.Printf("FormParams infoDataCounterValue: %s\n", parOcc)
+	occ, _ := strconv.Atoi(parOcc)
+
+	data, err := env.db.GetCounterValueByOcc(occ)
+	if err != nil {
+		fmt.Printf("infoDataCounterValue: %s\n", err)
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+	getJSONResponse(w, r, data)
+}
+
+func (env *Env) infoDataValue(w http.ResponseWriter, r *http.Request) {
+	parOcc := r.FormValue("occ")
+	if parOcc == "" {
+		parOcc = "0"
+	}
+	//fmt.Printf("FormParams infoDataValue: %s\n", parOcc)
+	occ, _ := strconv.Atoi(parOcc)
+
+	data, err := env.db.GetDataValueByOcc(occ)
+	if err != nil {
+		fmt.Printf("infoDataValue: %s\n", err)
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+	getJSONResponse(w, r, data)
+}
+
+func (env *Env) infoDataPaym(w http.ResponseWriter, r *http.Request) {
+	parOcc := r.FormValue("occ")
+	if parOcc == "" {
+		parOcc = "0"
+	}
+	//fmt.Printf("FormParams infoDataPaym: %s\n", parOcc)
+	occ, _ := strconv.Atoi(parOcc)
+	data, err := env.db.GetDataPaymByOcc(occ)
+	if err != nil {
+		fmt.Printf("infoDataPaym: %s\n", err)
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}

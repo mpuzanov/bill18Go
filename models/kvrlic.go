@@ -6,7 +6,7 @@ import (
 
 //Lic Лицевой
 type Lic struct {
-	Occ int
+	Occ int `json:"occ"`
 }
 
 //Lics Лицевые
@@ -18,7 +18,7 @@ type Lics struct {
 }
 
 //GetKvrLic Выдаём список лицевых по заданному адресу(улица,дом,квартира)
-func GetKvrLic(streetName, nomDom, nomKvr string) (*Lics, error) {
+func (db *DB) GetKvrLic(streetName, nomDom, nomKvr string) (*Lics, error) {
 	rows, err := db.Query("k_show_occ_adres @street_name1, @nom_dom1, @nom_kvr1",
 		sql.Named("street_name1", streetName),
 		sql.Named("nom_dom1", nomDom),

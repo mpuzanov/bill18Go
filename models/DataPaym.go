@@ -1,37 +1,58 @@
 package models
 
-// Платежи
+import (
+	"database/sql"
+	"fmt"
+	"log"
+)
+
+//DataPaym Платежи
 type DataPaym struct {
-	Fin_str          string
-	Lic              int
-	Date             string
-	Summa            float64
-	Paymaccount_peny float64
-	Sup_name         string
+	FinStr          string  `json:"fin_str,omitempty"`
+	Occ             int     `json:"lic,omitempty"`
+	Date            string  `json:"date,omitempty"`
+	Summa           float64 `json:"summa,omitempty"`
+	PaymaccountPeny float64 `json:"paymaccount_peny,omitempty"`
+	SupName         string  `json:"sup_name,omitempty"`
 }
 
-// // GetDataOcc Выдаём информацию по заданному лицевому счёту
-// func GetDataOcc(occ int) ([]*DataOcc, error) {
-// 	rows, err := db.Query("k_show_occ @occ",
-// 		sql.Named("occ", occ))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
+//ToString Строковое представление Платежа
+func (zap *DataPaym) ToString() string {
+	return fmt.Sprintf("Период: %15s, Лицевой: %9d, Дата: %10s, Сумма: %9g",
+		zap.FinStr, zap.Occ, zap.Date, zap.Summa)
+}
 
-// 	SliseDataOcc := make([]*DataOcc, 0)
-// 	for rows.Next() {
-// 		DataOcc1 := new(DataOcc)
-// 		err := rows.Scan(&DataOcc1.Occ, &DataOcc1.BasaName, &DataOcc1.Address, &DataOcc1.TipName, &DataOcc1.TotalSq,
-// 			&DataOcc1.OccSup, &DataOcc1.FinCurrent, &DataOcc1.FinCurrentStr, &DataOcc1.KolPeople,
-// 			&DataOcc1.CV1, &DataOcc1.CV2, &DataOcc1.Rejim)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		SliseDataOcc = append(SliseDataOcc, DataOcc1)
-// 	}
-// 	if err = rows.Err(); err != nil {
-// 		return nil, err
-// 	}
-// 	return SliseDataOcc, nil
-// }
+//GetDataPaymByOcc Список платежей по лицевому счёту
+func (db *DB) GetDataPaymByOcc(occ int) ([]*DataPaym, error) {
+	const querySQL = `
+	k_show_payings @occ=@occ1
+`
+	rows, err := db.Query(querySQL,
+		sql.Named("occ1", occ),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	slice := []*DataPaym{}
+	for rows.Next() {
+		zap := DataPaym{}
+		err := rows.Scan(&zap.FinStr,
+			&zap.Occ,
+			&zap.Date,
+			&zap.Summa,
+			&zap.PaymaccountPeny,
+			&zap.SupName,
+		)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		slice = append(slice, &zap)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	return slice, nil
+}

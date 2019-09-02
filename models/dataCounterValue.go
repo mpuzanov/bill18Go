@@ -1,41 +1,63 @@
 package models
 
-// Показания приборов учёта
-type DataCounterValue struct {
-	Occ             int
-	Counter_id      int
-	Inspector_date  string
-	Inspector_value float64
-	Actual_value    float64
-	Fin_str         string
-	Id              int
-	Serial_number   string
-	Serv_name       string
-	Fin_id          int
+import (
+	"database/sql"
+	"log"
+)
+
+//CounterValue Показание прибора учёта
+type CounterValue struct {
+	Occ            int     `json:"occ"`
+	CounterID      int     `json:"counter_id"`
+	InspectorDate  string  `json:"inspector_date"`
+	InspectorValue float64 `json:"inspector_value"`
+	ActualValue    float64 `json:"actual_value"`
+	FinStr         string  `json:"fin_str"`
+	ID             int     `json:"id"`
+	SerialNumber   string  `json:"serial_number"`
+	ServName       string  `json:"serv_name"`
+	FinID          int     `json:"fin_id"`
+	Sysuser        string  `json:"sysuser,omitempty"`
 }
 
-// // GetDataOcc Выдаём информацию по заданному лицевому счёту
-// func GetDataOcc(occ int) ([]*DataOcc, error) {
-// 	rows, err := db.Query("k_show_occ @occ",
-// 		sql.Named("occ", occ))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-
-// 	SliseDataOcc := make([]*DataOcc, 0)
-// 	for rows.Next() {
-// 		DataOcc1 := new(DataOcc)
-// 		err := rows.Scan(&DataOcc1.Occ, &DataOcc1.BasaName, &DataOcc1.Address, &DataOcc1.TipName, &DataOcc1.TotalSq,
-// 			&DataOcc1.OccSup, &DataOcc1.FinCurrent, &DataOcc1.FinCurrentStr, &DataOcc1.KolPeople,
-// 			&DataOcc1.CV1, &DataOcc1.CV2, &DataOcc1.Rejim)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		SliseDataOcc = append(SliseDataOcc, DataOcc1)
-// 	}
-// 	if err = rows.Err(); err != nil {
-// 		return nil, err
-// 	}
-// 	return SliseDataOcc, nil
-// }
+//GetCounterValueByOcc Показания ПУ по лицевому счёту
+func (db *DB) GetCounterValueByOcc(occ int) ([]*CounterValue, error) {
+	const querySQL = `
+	k_show_counters_value @occ=@occ1, @counter_id=null, @row1=@kolval
+`
+	kolval := 6
+	rows, err := db.Query(querySQL,
+		sql.Named("occ1", occ),
+		sql.Named("kolval", kolval),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	slice := []*CounterValue{}
+	for rows.Next() {
+		zap := CounterValue{}
+		err := rows.Scan(&zap.Occ,
+			&zap.CounterID,
+			&zap.InspectorDate,
+			&zap.InspectorValue,
+			&zap.ActualValue,
+			&zap.FinStr,
+			&zap.ID,
+			&zap.SerialNumber,
+			&zap.ServName,
+			&zap.FinID,
+			&zap.Sysuser,
+		)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		slice = append(slice, &zap)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	return slice, nil
+}

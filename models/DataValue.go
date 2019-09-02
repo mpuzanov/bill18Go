@@ -1,42 +1,68 @@
 package models
 
-// Начисления
+import (
+	"database/sql"
+	"fmt"
+	"log"
+)
+
+//DataValue Начисления
 type DataValue struct {
-	Fin_str          string
-	Lic              int
-	Saldo            float64
-	Value            float64
-	Added            float64
-	Paid             float64
-	Paymaccount      float64
-	Paymaccount_peny float64
-	Paymaccount_serv float64
-	Debt             float64
-	sup_name         string
+	FinStr          string  `json:"fin_str,omitempty"`
+	Occ             int     `json:"lic,omitempty"`
+	Saldo           float64 `json:"saldo,omitempty"`
+	Value           float64 `json:"value,omitempty"`
+	Added           float64 `json:"added,omitempty"`
+	Paid            float64 `json:"paid,omitempty"`
+	Paymaccount     float64 `json:"paymaccount,omitempty"`
+	PaymaccountPeny float64 `json:"paymaccount_peny,omitempty"`
+	PaymaccountServ float64 `json:"paymaccount_serv,omitempty"`
+	Debt            float64 `json:"debt,omitempty"`
+	SupName         string  `json:"sup_name,omitempty"`
 }
 
-// // GetDataOcc Выдаём информацию по заданному лицевому счёту
-// func GetDataOcc(occ int) ([]*DataOcc, error) {
-// 	rows, err := db.Query("k_show_occ @occ",
-// 		sql.Named("occ", occ))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
+//ToString Строковое представление Начисления
+func (zap *DataValue) ToString() string {
+	return fmt.Sprintf("Период: %15s, Лицевой: %9d, Saldo: %9g, Paid: %9g",
+		zap.FinStr, zap.Occ, zap.Saldo, zap.Paid)
+}
 
-// 	SliseDataOcc := make([]*DataOcc, 0)
-// 	for rows.Next() {
-// 		DataOcc1 := new(DataOcc)
-// 		err := rows.Scan(&DataOcc1.Occ, &DataOcc1.BasaName, &DataOcc1.Address, &DataOcc1.TipName, &DataOcc1.TotalSq,
-// 			&DataOcc1.OccSup, &DataOcc1.FinCurrent, &DataOcc1.FinCurrentStr, &DataOcc1.KolPeople,
-// 			&DataOcc1.CV1, &DataOcc1.CV2, &DataOcc1.Rejim)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		SliseDataOcc = append(SliseDataOcc, DataOcc1)
-// 	}
-// 	if err = rows.Err(); err != nil {
-// 		return nil, err
-// 	}
-// 	return SliseDataOcc, nil
-// }
+//GetDataValueByOcc Начисления по лицевому счёту
+func (db *DB) GetDataValueByOcc(occ int) ([]*DataValue, error) {
+	const querySQL = `
+	k_show_values_occ @occ=@occ1, @row1=12
+	`
+	rows, err := db.Query(querySQL,
+		sql.Named("occ1", occ),
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	slice := []*DataValue{}
+	for rows.Next() {
+		zap := DataValue{}
+		err := rows.Scan(&zap.FinStr,
+			&zap.Occ,
+			&zap.Saldo,
+			&zap.Value,
+			&zap.Added,
+			&zap.Paid,
+			&zap.Paymaccount,
+			&zap.PaymaccountPeny,
+			&zap.PaymaccountServ,
+			&zap.Debt,
+			&zap.SupName,
+		)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		slice = append(slice, &zap)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	return slice, nil
+}

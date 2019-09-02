@@ -19,7 +19,7 @@ type Flats struct {
 }
 
 //GetFlats Возвращаем с писок квартир по заданной улице
-func GetFlats(streetName, nomDom string) (*Flats, error) {
+func (db *DB) GetFlats(streetName, nomDom string) (*Flats, error) {
 	rows, err := db.Query("k_show_kvr @street_name1,@nom_dom1",
 		sql.Named("street_name1", streetName),
 		sql.Named("nom_dom1", nomDom))

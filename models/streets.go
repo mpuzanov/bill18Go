@@ -1,34 +1,47 @@
 package models
 
+import (
+	"fmt"
+	"log"
+)
+
 //Street Улица
 type Street struct {
 	StreetName string `json:"name"`
 }
 
-//Streets Улицы
-type Streets struct {
-	DataStreets []Street `json:"dataStreets"`
+//ToString Строковое представление Платежа
+func (zap *Street) ToString() string {
+	return fmt.Sprintf("%s", zap.StreetName)
 }
 
-// AllStreets Возвращаем список улиц
-func AllStreets() (*Streets, error) {
-	rows, err := db.Query("k_show_streets")
+//GetAllStreets Возвращаем список улиц
+func (db *DB) GetAllStreets() ([]*Street, error) {
+	const querySQL = `
+	k_show_streets
+	`
+	rows, err := db.Query(querySQL)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	streets := new(Streets)
+	slice := []*Street{}
 	for rows.Next() {
-		var street Street
-		err := rows.Scan(&street.StreetName)
+		zap := Street{}
+		err := rows.Scan(&zap.StreetName)
 		if err != nil {
 			return nil, err
 		}
-		streets.DataStreets = append(streets.DataStreets, street)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		slice = append(slice, &zap)
 	}
-	if err = rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
 		return nil, err
 	}
-	return streets, nil
+	return slice, nil
 }
