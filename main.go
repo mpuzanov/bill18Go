@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/mpuzanov/bill18go/models"
+	"github.com/mpuzanov/bill18Go/models"
 
 	_ "github.com/denisenkom/go-mssqldb"
 )
@@ -41,7 +41,6 @@ func main() {
 		}
 	}
 	isPrettyJSON = cfg.IsPrettyJSON
-	fmt.Println(isPrettyJSON)
 
 	//connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;", cfg.Server, cfg.User, cfg.Password, cfg.Port, cfg.Database)
 	connString := fmt.Sprintf("sqlserver://%s:%s@%s:%d?database=%s",
@@ -99,6 +98,7 @@ func getJSONResponse(w http.ResponseWriter, r *http.Request, data interface{}) {
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")
+	//w.WriteHeader(http.StatusOK)
 	w.Write(jsData)
 }
 
@@ -112,6 +112,9 @@ func (env *Env) streetIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (env *Env) buildIndex(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fmt.Printf("%v\n", r.Form)
+
 	streetName := r.FormValue("street_name")
 	if streetName == "" {
 		streetName = "1-я Донская ул."
@@ -121,13 +124,13 @@ func (env *Env) buildIndex(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
-	// for _, build := range builds.DataBuilds {
-	// 	fmt.Printf("%s, %s, %s\n", builds.Street_name, build.Nom_dom, build.Nom_dom_sort)
-	// }
 	getJSONResponse(w, r, data)
 }
 
 func (env *Env) flatsIndex(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fmt.Printf("%v\n", r.Form)
+
 	streetName := r.FormValue("street_name")
 	nomDom := r.FormValue("nom_dom")
 	if streetName == "" {
@@ -148,6 +151,9 @@ func (env *Env) flatsIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (env *Env) licsIndex(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fmt.Printf("%v\n", r.Form)
+
 	streetName := r.FormValue("street_name")
 	nomDom := r.FormValue("nom_dom")
 	nomKvr := r.FormValue("nom_kvr")

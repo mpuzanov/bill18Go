@@ -5,40 +5,40 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mpuzanov/bill18go/models"
+	"github.com/mpuzanov/bill18Go/models"
 )
 
 type mockDB struct{}
 
 func (mdb *mockDB) GetAllStreets() ([]*models.Street, error) {
 	tbl := make([]*models.Street, 0)
-	tbl = append(tbl, &models.Street{"Молодёжная ул."})
-	tbl = append(tbl, &models.Street{"Камбарская ул."})
+	tbl = append(tbl, &models.Street{StreetName: "Молодёжная ул."})
+	tbl = append(tbl, &models.Street{StreetName: "Камбарская ул."})
 	return tbl, nil
 }
 func (mdb *mockDB) GetBuilds(streetName string) (*models.Builds, error) {
-	tbl := &models.Builds{"1-я Донская ул.",
-		[]models.Build{models.Build{models.Street{"1-я Донская ул."}, "6", "       6"}}}
+	tbl := &models.Builds{StreetName: "1-я Донская ул.",
+		DataBuilds: []models.Build{models.Build{Street: models.Street{StreetName: "1-я Донская ул."}, NomDom: "6", NomDomSort: "       6"}}}
 	return tbl, nil
 }
 func (mdb *mockDB) GetFlats(streetName, nomDom string) (*models.Flats, error) {
-	tbl := &models.Flats{"Авангардная ул.",
-		"3",
-		[]models.Flat{
-			{models.Build{models.Street{"Авангардная ул."}, "3", "       3"},
-				"1",
-				"       1"},
-		},
-	}
+	tbl := &models.Flats{
+		StreetName: "Авангардная ул.",
+		NomDom:     "3",
+		DataKvr: []models.Flat{
+			{Build: models.Build{Street: models.Street{StreetName: "Авангардная ул."}, NomDom: "3", NomDomSort: "       3"},
+				NomKvr:     "1",
+				NomKvrSort: "       1"},
+		}}
 	return tbl, nil
 }
 func (mdb *mockDB) GetKvrLic(streetName, nomDom, nomKvr string) (*models.Lics, error) {
-	tbl := &models.Lics{"Авангардная ул.",
-		"3",
-		"1",
-		[]models.Lic{
-			{345740},
-			{345741},
+	tbl := &models.Lics{StreetName: "Авангардная ул.",
+		NomDom: "3",
+		NomKvr: "1",
+		DataKvrLic: []models.Lic{
+			{Occ: 345740},
+			{Occ: 345741},
 		}}
 	return tbl, nil
 }
@@ -70,8 +70,8 @@ func (mdb *mockDB) GetDataPaymByOcc(occ int) ([]*models.DataPaym, error) {
 	return tbl, nil
 }
 func (mdb *mockDB) GetDataOcc(occ int) (*models.DataOcc, error) {
-	tbl := &models.DataOcc{45321, "komp", "Ижевск, ул. Баранова д.69 кв.1", "ТСЖ Исток", 31.6, 777045321, 210,
-		"июль 2019", 1, 5, 24, "норм"}
+	tbl := &models.DataOcc{Occ: 45321, BasaName: "komp", Address: "Ижевск, ул. Баранова д.69 кв.1", TipName: "ТСЖ Исток", TotalSq: 31.6, OccSup: 777045321, FinCurrent: 210,
+		FinCurrentStr: "июль 2019", KolPeople: 1, CV1: 5, CV2: 24, Rejim: "норм"}
 	return tbl, nil
 }
 

@@ -1,0 +1,10 @@
+github.com/denisenkom/go-mssqldb v0.0.0-20190906004059-62cf760a6c9e h1:v+f13CZh4YjuwOlx5nqyqlVGzuZLu21yifGKpnuAHP8=
+github.com/denisenkom/go-mssqldb v0.0.0-20190906004059-62cf760a6c9e/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
+github.com/go-yaml/yaml v2.1.0+incompatible h1:RYi2hDdss1u4YE7GwixGzWwVo47T8UQwnTLB6vQiq+o=
+github.com/go-yaml/yaml v2.1.0+incompatible/go.mod h1:w2MrLa16VYP0jy6N7M5kHaCkaLENm+P+Tv+MfurjSw0=
+github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe h1:lXe2qZdvpiX5WZkZR4hgp4KJVfY3nMkvmwbVkpv1rVY=
+github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe/go.mod h1:8vg3r2VgvsThLBIFL93Qb5yWzgyZWhEmBwUJWevAkK0=
+github.com/mpuzanov/bill18go v0.0.0-20190902110618-394340b00287 h1:xGWxhCZHEb1vCE7TBpplk+2oJ3LjKMDGPAU7o1fDByg=
+github.com/mpuzanov/bill18go v0.0.0-20190902110618-394340b00287/go.mod h1:LqjZKQPgiNsDe+okhrfhQanxAn5k0PAqXbXve0s2/7g=
+golang.org/x/crypto v0.0.0-20190325154230-a5d413f7728c/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=

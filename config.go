@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -42,10 +41,6 @@ func readConfig(ConfigName string) (x *Config, err error) {
 	if x.LogLevel == "" {
 		x.LogLevel = "Debug"
 	}
-	fmt.Println(x.IsPrettyJSON)
-	// if x.isPrettyJSON == "" {
-	// 	x.isPrettyJSON = false
-	// }
 	return x, nil
 }
 
