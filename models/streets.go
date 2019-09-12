@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 )
 
 //Street Улица

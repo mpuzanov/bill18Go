@@ -1,0 +1,7 @@
+time="12-09-2019 13:29:43" level=info msg="log.Level: trace"
+time="12-09-2019 13:29:43" level=info msg="Listening on port :8080"
+time="12-09-2019 13:29:55" level=trace msg=streetIndex
+time="12-09-2019 13:29:57" level=trace msg="infoLicIndex 777045321"
+time="12-09-2019 13:29:59" level=trace msg="infoDataCounterValue 45321"
+time="12-09-2019 13:30:39" level=info msg="log.Level: trace"
+time="12-09-2019 13:30:39" level=info msg="Listening on port :8080"

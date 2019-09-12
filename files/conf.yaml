@@ -1,6 +1,8 @@
 #Уровень отладки. Влияет на содержимое сообщений в логе
-#Допустимые значения: DEBUG INFO ERROR
-loglevel: DEBUG
+#Допустимые значения: Trace, Debug, Info, Warning, Error, Fatal, Panic
+loglevel: Trace
+#Установка логирования в файл 
+logToFile: true
 #Формируем JSON с отступами
 isPrettyJSON: true
 

@@ -25,6 +25,7 @@ type SQLConnect struct {
 // Config - структура для считывания конфигурационного файла
 type Config struct {
 	LogLevel     string     `yaml:"loglevel"`
+	LogToFile    bool       `yaml:"logToFile"`
 	IsPrettyJSON bool       `yaml:"isPrettyJSON"`
 	SQLConnect   SQLConnect `yaml:"sqlconnect"`
 }
@@ -39,7 +40,7 @@ func readConfig(ConfigName string) (x *Config, err error) {
 		return nil, err
 	}
 	if x.LogLevel == "" {
-		x.LogLevel = "Debug"
+		x.LogLevel = "Trace"
 	}
 	return x, nil
 }
