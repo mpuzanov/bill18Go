@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -25,6 +26,8 @@ func (db *DB) GetAllStreets() ([]*Street, error) {
 		return nil, err
 	}
 	defer rows.Close()
+
+	log.Traceln(querySQL)
 
 	slice := []*Street{}
 	for rows.Next() {
