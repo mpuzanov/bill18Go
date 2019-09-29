@@ -11,10 +11,10 @@ import (
 	"net/http"
 	"os"
 
-	//"os"
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/mpuzanov/bill18Go/config"
 	log "github.com/mpuzanov/bill18Go/logger"
 	"github.com/mpuzanov/bill18Go/models"
@@ -58,23 +58,27 @@ func NewServer(cfg *config.Config) *Bill18Server {
 		server: defaultServer,
 		config: cfg,
 	}
+	router := mux.NewRouter()
+
+	// fileServer := http.FileServer(http.Dir("public"))
+	// http.Handle("/public/", http.StripPrefix("/public/", fileServer))
 
 	fileServer := http.FileServer(http.Dir("public"))
-	http.Handle("/public/", http.StripPrefix("/public/", fileServer))
+	router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", fileServer))
 
-	http.HandleFunc("/", env.homePage)
-	http.HandleFunc("/upload", upload)
-	http.HandleFunc("/streets", env.streetIndex)
-	http.HandleFunc("/builds", env.buildIndex)
-	http.HandleFunc("/flats", env.flatsIndex)
-	http.HandleFunc("/lics", env.licsIndex)
-	http.HandleFunc("/infoLic", env.infoLicIndex)
-	http.HandleFunc("/infoDataCounter", env.infoDataCounter)
+	router.HandleFunc("/", env.homePage)
+	router.HandleFunc("/upload", upload)
+	router.HandleFunc("/streets", env.streetIndex)
+	router.HandleFunc("/builds", env.buildIndex)
+	router.HandleFunc("/flats", env.flatsIndex)
+	router.HandleFunc("/lics", env.licsIndex)
+	router.HandleFunc("/infoLic", env.infoLicIndex)
+	router.HandleFunc("/infoDataCounter", env.infoDataCounter)
 
-	http.HandleFunc("/infoDataCounterValue", env.infoDataCounterValue)
-	http.HandleFunc("/infoDataValue", env.infoDataValue)
-	http.HandleFunc("/infoDataPaym", env.infoDataPaym)
-
+	router.HandleFunc("/infoDataCounterValue", env.infoDataCounterValue)
+	router.HandleFunc("/infoDataValue", env.infoDataValue)
+	router.HandleFunc("/infoDataPaym", env.infoDataPaym)
+	srv.server.Handler = router
 	return srv
 }
 
