@@ -1,8 +1,5 @@
 {{ define "index" }} {{ template "header" }}
-
-<body>
-    <div class="main">
-        <h1>API для работы с приборами учёта</h1>
+<div class="col-xs-12">
         <a href="http://{{.Listen}}/streets" target="_blank">Улицы</a><br/>
         <a href="http://{{.Listen}}/builds" target="_blank">Дома</a><br/>
         <a href="http://{{.Listen}}/builds?street_name=Авангардная ул." target="_blank">Дома с параметром улицы</a><br/>
@@ -14,7 +11,6 @@
         <a href="http://{{.Listen}}/infoDataCounterValue?occ=45321" target="_blank">Список показаний ПУ</a><br/>
         <a href="http://{{.Listen}}/infoDataValue?occ=45321" target="_blank">Список начислений</a><br/>
         <a href="http://{{.Listen}}/infoDataPaym?occ=45321" target="_blank">Список платежей</a><br/>
-    </div>
-</body>
-
+        <a href="http://{{.Listen}}/upload" target="_blank">Загрузка файлов</a><br/>
+</div>
 {{ template "footer" }} {{ end }}

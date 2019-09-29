@@ -1,11 +1,19 @@
-package apiserver
+package controllers
 
 import (
 	"bytes"
+	"context"
+	"crypto/md5"
 	"encoding/json"
+	"fmt"
 	"html/template"
+	"io"
 	"net/http"
+	"os"
+
+	//"os"
 	"strconv"
+	"time"
 
 	"github.com/mpuzanov/bill18Go/config"
 	log "github.com/mpuzanov/bill18Go/logger"
@@ -18,13 +26,19 @@ type Env struct {
 	cfg *config.Config
 }
 
+//Bill18Server my http-server
+type Bill18Server struct {
+	server *http.Server
+	config *config.Config
+}
+
 var (
 	env *Env
 )
 
-//RunHTTP ...
-func RunHTTP(cfg *config.Config) *http.Server {
-	log.Info("Запуск веб-сервера на", cfg.Listen)
+//NewServer ...
+func NewServer(cfg *config.Config) *Bill18Server {
+	log.Info("Запуск веб-сервера на ", cfg.Listen)
 
 	//=====================================================================
 	db, err := models.GetInitDB(cfg.DatabaseURL)
@@ -35,9 +49,21 @@ func RunHTTP(cfg *config.Config) *http.Server {
 	log.Traceln("connString:", cfg.DatabaseURL)
 	//=====================================================================
 
-	srv := &http.Server{Addr: cfg.Listen}
+	defaultServer := &http.Server{
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		Addr:         cfg.Listen,
+	}
+	srv := &Bill18Server{
+		server: defaultServer,
+		config: cfg,
+	}
+
+	fileServer := http.FileServer(http.Dir("public"))
+	http.Handle("/public/", http.StripPrefix("/public/", fileServer))
 
 	http.HandleFunc("/", env.homePage)
+	http.HandleFunc("/upload", upload)
 	http.HandleFunc("/streets", env.streetIndex)
 	http.HandleFunc("/builds", env.buildIndex)
 	http.HandleFunc("/flats", env.flatsIndex)
@@ -49,18 +75,20 @@ func RunHTTP(cfg *config.Config) *http.Server {
 	http.HandleFunc("/infoDataValue", env.infoDataValue)
 	http.HandleFunc("/infoDataPaym", env.infoDataPaym)
 
-	go func() {
-		log.Fatal(srv.ListenAndServe())
-	}()
-
 	return srv
 }
 
-//checkErr функция обработки ошибок
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
+// Start launches the phishing server, listening on the configured address.
+func (srv *Bill18Server) Start() error {
+	log.Infof("Starting http-server at http://%s", srv.config.Listen)
+	return srv.server.ListenAndServe()
+}
+
+// Shutdown attempts to gracefully shutdown the server.
+func (srv *Bill18Server) Shutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	return srv.server.Shutdown(ctx)
 }
 
 //prettyprint Делаем красивый json с отступами
@@ -79,7 +107,7 @@ func (env *Env) getJSONResponse(w http.ResponseWriter, r *http.Request, data int
 		log.Error(err)
 		return
 	}
-	if env.cfg.IsPrettyJSON == true {
+	if env.cfg.IsPrettyJSON {
 		jsData, err = prettyprint(jsData)
 		if err != nil {
 			log.Error(err)
@@ -252,4 +280,43 @@ func (env *Env) infoDataPaym(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Traceln("infoDataPaym", parOcc)
 	env.getJSONResponse(w, r, data)
+}
+
+// upload logic
+func upload(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("method:", r.Method)
+	if r.Method == "GET" {
+		crutime := time.Now().Unix()
+		h := md5.New()
+		io.WriteString(h, strconv.FormatInt(crutime, 10))
+		token := fmt.Sprintf("%x", h.Sum(nil))
+		fmt.Println("token:", token)
+		t, _ := template.ParseFiles("upload.html")
+		//t.ExecuteTemplate(w, "Upload", &struct{ token string })
+		//t.Execute(w, token)
+
+		t, err := template.ParseFiles("templates/upload.html", "templates/header.html", "templates/footer.html")
+		if err != nil {
+			log.Error("template.ParseFiles", err.Error())
+			return
+		}
+		t.ExecuteTemplate(w, "Upload", &struct{ Token string }{token}) //&struct{ token string }{token})
+
+	} else {
+		r.ParseMultipartForm(32 << 20)
+		file, handler, err := r.FormFile("uploadfile")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer file.Close()
+		fmt.Fprintf(w, "%v", handler.Header)
+		f, err := os.OpenFile("./loadfiles/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer f.Close()
+		io.Copy(f, file)
+	}
 }
