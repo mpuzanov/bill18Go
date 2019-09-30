@@ -67,7 +67,7 @@ func NewServer(cfg *config.Config) *Bill18Server {
 	router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", fileServer))
 
 	router.HandleFunc("/", env.homePage)
-	router.HandleFunc("/upload", upload)
+	router.HandleFunc("/upload", env.upload)
 	router.HandleFunc("/streets", env.streetIndex)
 	router.HandleFunc("/builds", env.buildIndex)
 	router.HandleFunc("/flats", env.flatsIndex)
@@ -287,7 +287,7 @@ func (env *Env) infoDataPaym(w http.ResponseWriter, r *http.Request) {
 }
 
 // upload logic
-func upload(w http.ResponseWriter, r *http.Request) {
+func (env *Env) upload(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
 		crutime := time.Now().Unix()
@@ -304,7 +304,10 @@ func upload(w http.ResponseWriter, r *http.Request) {
 			log.Error("template.ParseFiles", err.Error())
 			return
 		}
-		t.ExecuteTemplate(w, "Upload", &struct{ Token string }{token}) //&struct{ token string }{token})
+		t.ExecuteTemplate(w, "Upload", &struct {
+			Listen string
+			Token  string
+		}{env.cfg.Listen, token}) //&struct{ token string }{token})
 
 	} else {
 		r.ParseMultipartForm(32 << 20)
