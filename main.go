@@ -15,7 +15,7 @@ import (
 
 //github.com/mpuzanov/bill18Go/
 const (
-	configFileName = "files/conf.yaml"
+	configFileName = "conf/conf.yaml"
 )
 
 func main() {

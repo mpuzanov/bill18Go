@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/json"
@@ -18,6 +17,7 @@ import (
 	"github.com/mpuzanov/bill18Go/config"
 	log "github.com/mpuzanov/bill18Go/logger"
 	"github.com/mpuzanov/bill18Go/models"
+	"github.com/mpuzanov/bill18Go/util"
 )
 
 //Env Интерфейс для вызова функций sql
@@ -60,24 +60,24 @@ func NewServer(cfg *config.Config) *Bill18Server {
 	}
 	router := mux.NewRouter()
 
+	// static-files
 	// fileServer := http.FileServer(http.Dir("public"))
 	// http.Handle("/public/", http.StripPrefix("/public/", fileServer))
 
-	fileServer := http.FileServer(http.Dir("public"))
-	router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", fileServer))
+	//static-files-gorilla-mux
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
 	router.HandleFunc("/", env.homePage)
 	router.HandleFunc("/upload", env.upload)
-	router.HandleFunc("/streets", env.streetIndex)
-	router.HandleFunc("/builds", env.buildIndex)
-	router.HandleFunc("/flats", env.flatsIndex)
-	router.HandleFunc("/lics", env.licsIndex)
-	router.HandleFunc("/infoLic", env.infoLicIndex)
-	router.HandleFunc("/infoDataCounter", env.infoDataCounter)
-
-	router.HandleFunc("/infoDataCounterValue", env.infoDataCounterValue)
-	router.HandleFunc("/infoDataValue", env.infoDataValue)
-	router.HandleFunc("/infoDataPaym", env.infoDataPaym)
+	router.HandleFunc("/api/streets", logging(env.streetIndex))
+	router.HandleFunc("/api/builds", env.buildIndex)
+	router.HandleFunc("/api/flats", env.flatsIndex)
+	router.HandleFunc("/api/lics", env.licsIndex)
+	router.HandleFunc("/api/infoLic", env.infoLicIndex)
+	router.HandleFunc("/api/infoDataCounter", env.infoDataCounter)
+	router.HandleFunc("/api/infoDataCounterValue", env.infoDataCounterValue)
+	router.HandleFunc("/api/infoDataValue", env.infoDataValue)
+	router.HandleFunc("/api/infoDataPaym", env.infoDataPaym)
 	srv.server.Handler = router
 	return srv
 }
@@ -95,16 +95,15 @@ func (srv *Bill18Server) Shutdown() error {
 	return srv.server.Shutdown(ctx)
 }
 
-//prettyprint Делаем красивый json с отступами
-func prettyprint(b []byte) ([]byte, error) {
-	var out bytes.Buffer
-	err := json.Indent(&out, b, "", "    ")
-	return out.Bytes(), err
+func logging(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL.Path)
+		f(w, r)
+	}
 }
 
 //getJSONResponse Возвращаем информацию в JSON формате
 func (env *Env) getJSONResponse(w http.ResponseWriter, r *http.Request, data interface{}) {
-	//jsData, err := json.MarshalIndent(data, "", "    ")
 	jsData, err := json.Marshal(data)
 	if err != nil {
 		http.Error(w, "Error creating JSON response", http.StatusInternalServerError)
@@ -112,7 +111,7 @@ func (env *Env) getJSONResponse(w http.ResponseWriter, r *http.Request, data int
 		return
 	}
 	if env.cfg.IsPrettyJSON {
-		jsData, err = prettyprint(jsData)
+		jsData, err = util.Prettyprint(jsData)
 		if err != nil {
 			log.Error(err)
 		}
