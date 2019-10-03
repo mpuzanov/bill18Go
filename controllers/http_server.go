@@ -16,13 +16,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/mpuzanov/bill18Go/config"
 	log "github.com/mpuzanov/bill18Go/logger"
-	"github.com/mpuzanov/bill18Go/models"
 	"github.com/mpuzanov/bill18Go/util"
 )
 
 //Env Интерфейс для вызова функций sql
 type Env struct {
-	db  models.Datastore
+	db  Datastore
 	cfg *config.Config
 }
 
@@ -41,7 +40,7 @@ func NewServer(cfg *config.Config) *Bill18Server {
 	log.Info("Запуск веб-сервера на ", cfg.Listen)
 
 	//=====================================================================
-	db, err := models.GetInitDB(cfg.DatabaseURL)
+	db, err := GetInitDB(cfg.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
@@ -69,6 +68,7 @@ func NewServer(cfg *config.Config) *Bill18Server {
 
 	router.HandleFunc("/", env.homePage)
 	router.HandleFunc("/upload", env.upload)
+	router.HandleFunc("/testapi", env.testapi)
 	router.HandleFunc("/api/streets", logging(env.streetIndex))
 	router.HandleFunc("/api/builds", env.buildIndex)
 	router.HandleFunc("/api/flats", env.flatsIndex)
@@ -130,6 +130,15 @@ func (env *Env) homePage(w http.ResponseWriter, r *http.Request) {
 	t.ExecuteTemplate(w, "index", &struct{ Listen string }{env.cfg.Listen})
 }
 
+func (env *Env) testapi(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles("templates/testapi.html", "templates/header.html", "templates/footer.html")
+	if err != nil {
+		log.Error("template.ParseFiles", err.Error())
+		return
+	}
+	t.ExecuteTemplate(w, "testapi", &struct{ Listen string }{env.cfg.Listen})
+}
+
 func (env *Env) streetIndex(w http.ResponseWriter, r *http.Request) {
 	data, err := env.db.GetAllStreets()
 	if err != nil {
@@ -142,11 +151,7 @@ func (env *Env) streetIndex(w http.ResponseWriter, r *http.Request) {
 
 func (env *Env) buildIndex(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-
 	streetName := r.FormValue("street_name")
-	if streetName == "" {
-		streetName = "1-я Донская ул."
-	}
 	data, err := env.db.GetBuilds(streetName)
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
@@ -157,17 +162,11 @@ func (env *Env) buildIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (env *Env) flatsIndex(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	//r.ParseForm()
 	//log.Tracef("%v\n", r.Form)
 
 	streetName := r.FormValue("street_name")
 	nomDom := r.FormValue("nom_dom")
-	if streetName == "" {
-		streetName = "1-я Донская ул."
-	}
-	if nomDom == "" {
-		nomDom = "6"
-	}
 	data, err := env.db.GetFlats(streetName, nomDom)
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
@@ -184,15 +183,6 @@ func (env *Env) licsIndex(w http.ResponseWriter, r *http.Request) {
 	streetName := r.FormValue("street_name")
 	nomDom := r.FormValue("nom_dom")
 	nomKvr := r.FormValue("nom_kvr")
-	if streetName == "" {
-		streetName = "1-я Донская ул."
-	}
-	if nomDom == "" {
-		nomDom = "6"
-	}
-	if nomKvr == "" {
-		nomKvr = "2"
-	}
 	data, err := env.db.GetKvrLic(streetName, nomDom, nomKvr)
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
@@ -287,16 +277,13 @@ func (env *Env) infoDataPaym(w http.ResponseWriter, r *http.Request) {
 
 // upload logic
 func (env *Env) upload(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("method:", r.Method)
+	//fmt.Println("method:", r.Method)
 	if r.Method == "GET" {
 		crutime := time.Now().Unix()
 		h := md5.New()
 		io.WriteString(h, strconv.FormatInt(crutime, 10))
 		token := fmt.Sprintf("%x", h.Sum(nil))
-		fmt.Println("token:", token)
-		t, _ := template.ParseFiles("upload.html")
-		//t.ExecuteTemplate(w, "Upload", &struct{ token string })
-		//t.Execute(w, token)
+		//fmt.Println("token:", token)
 
 		t, err := template.ParseFiles("templates/upload.html", "templates/header.html", "templates/footer.html")
 		if err != nil {
@@ -306,7 +293,7 @@ func (env *Env) upload(w http.ResponseWriter, r *http.Request) {
 		t.ExecuteTemplate(w, "Upload", &struct {
 			Listen string
 			Token  string
-		}{env.cfg.Listen, token}) //&struct{ token string }{token})
+		}{env.cfg.Listen, token})
 
 	} else {
 		r.ParseMultipartForm(32 << 20)

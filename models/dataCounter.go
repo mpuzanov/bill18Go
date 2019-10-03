@@ -1,9 +1,7 @@
 package models
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 )
 
 //DataCounter Прибор учёта
@@ -39,56 +37,4 @@ func (zap *DataCounter) ToString() string {
 func (zap *DataCounter) ToStringMoreLines() string {
 	return fmt.Sprintf("Лицевой: %d\nКод: %d\nУслуга: %s\n№ %s\nЗначение: %g\nДата установки: %s",
 		zap.Occ, zap.CounterID, zap.ServName, zap.SerialNumber, zap.CountValue, zap.DateCreate)
-}
-
-//GetCounterByOcc Выводим все ПУ по заданному лицевому счёту
-func (db *DB) GetCounterByOcc(occ int) ([]*DataCounter, error) {
-
-	//k_show_counters @occ=:occ1
-	const querySQL = `
-		k_show_counters @occ
-		`
-	rows, err := db.Query(querySQL,
-		sql.Named("occ", occ),
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	slice := []*DataCounter{}
-	for rows.Next() {
-		zap := DataCounter{}
-		err := rows.Scan(&zap.Occ,
-			&zap.CounterID,
-			&zap.ServName,
-			&zap.SerialNumber,
-			&zap.CounterType,
-			&zap.MaxValue,
-			&zap.UnitID,
-			&zap.CountValue,
-			&zap.DateCreate,
-			&zap.PeriodCheck,
-			&zap.ValueDate,
-			&zap.LastValue,
-			&zap.ActualValue,
-			&zap.AvgMonth,
-			&zap.Tarif,
-			&zap.NormaSingle,
-			&zap.AvgItog,
-			&zap.KolNorma,
-		)
-		if err != nil {
-			log.Fatal(err)
-			return nil, err
-		}
-		//fmt.Println(zap.ToString())
-		slice = append(slice, &zap)
-	}
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-	return slice, nil
-
 }

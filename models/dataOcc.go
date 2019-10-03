@@ -1,9 +1,7 @@
 package models
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 )
 
 //DataOcc Информация по лицевому счёту
@@ -29,30 +27,4 @@ func (zap *DataOcc) ToString() (result string) {
 			zap.FinCurrentStr, zap.Occ, zap.Address, zap.TipName)
 	}
 	return
-}
-
-// GetDataOcc Выдаём информацию по заданному лицевому счёту
-func (db *DB) GetDataOcc(occ int) (*DataOcc, error) {
-	row := db.QueryRow("k_show_occ @occ=@occ1",
-		sql.Named("occ1", occ))
-
-	data := DataOcc{}
-	err := row.Scan(&data.Occ,
-		&data.BasaName,
-		&data.Address,
-		&data.TipName,
-		&data.TotalSq,
-		&data.OccSup,
-		&data.FinCurrent,
-		&data.FinCurrentStr,
-		&data.KolPeople,
-		&data.CV1,
-		&data.CV2,
-		&data.Rejim)
-	if err == sql.ErrNoRows {
-		return &data, nil
-	} else if err != nil {
-		log.Fatal(err)
-	}
-	return &data, nil
 }

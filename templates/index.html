@@ -1,18 +1,8 @@
 {{ define "index" }} {{ template "header" }}
-<div class="col-xs-12">
-        <a href="http://{{.Listen}}/api/streets" target="_blank">Улицы</a><br />
-        <a href="http://{{.Listen}}/api/builds" target="_blank">Дома</a><br />
-        <a href="http://{{.Listen}}/api/builds?street_name=Авангардная ул." target="_blank">Дома с параметром
-                улицы</a><br />
-        <a href="http://{{.Listen}}/api/flats?street_name=Авангардная ул.&nom_dom=3" target="_blank">Квартиры</a><br />
-        <a href="http://{{.Listen}}/api/lics?street_name=Авангардная ул.&nom_dom=3&nom_kvr=1" target="_blank">Лицевые по
-                адресу</a><br />
-        <a href="http://{{.Listen}}/api/infoLic?occ=777045321" target="_blank">Информация по лицевому</a><br />
-        <a href="http://{{.Listen}}/api/infoLic?occ=345338" target="_blank">Информация по лицевому(пусто)</a><br />
-        <a href="http://{{.Listen}}/api/infoDataCounter?occ=45321" target="_blank">Список ПУ</a><br />
-        <a href="http://{{.Listen}}/api/infoDataCounterValue?occ=45321" target="_blank">Список показаний ПУ</a><br />
-        <a href="http://{{.Listen}}/api/infoDataValue?occ=45321" target="_blank">Список начислений</a><br />
-        <a href="http://{{.Listen}}/api/infoDataPaym?occ=45321" target="_blank">Список платежей</a><br />
-        <a href="http://{{.Listen}}/upload" target="_blank">Загрузка файлов</a><br />
+<div class="container">
+        <div class="col-xs-12">
+                <a href="http://{{.Listen}}/upload" target="_blank">Загрузка файлов</a><br />
+        </div>
 </div>
+<!--class="container"-->
 {{ template "footer" }} {{ end }}
