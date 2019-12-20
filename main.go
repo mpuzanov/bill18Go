@@ -13,9 +13,8 @@ import (
 	log "github.com/mpuzanov/bill18Go/logger"
 )
 
-//github.com/mpuzanov/bill18Go/
 const (
-	configFileName = "conf/conf.yaml"
+	configFileName = "conf.yaml"
 )
 
 func main() {

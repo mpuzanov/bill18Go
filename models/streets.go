@@ -13,4 +13,3 @@ type Street struct {
 func (zap *Street) ToString() string {
 	return fmt.Sprintf("%s", zap.StreetName)
 }
-

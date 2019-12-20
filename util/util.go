@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 )
 
-//CheckErr функция обработки ошибок
-func CheckErr(err error) {
+//PanicIfErr функция обработки ошибок
+func PanicIfErr(err error) {
 	if err != nil {
 		panic(err)
 	}

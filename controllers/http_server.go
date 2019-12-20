@@ -3,7 +3,7 @@ package controllers
 import (
 	"context"
 	"crypto/md5"
-	"encoding/json"
+	"crypto/subtle"
 	"fmt"
 	"html/template"
 	"io"
@@ -14,26 +14,21 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+
 	"github.com/mpuzanov/bill18Go/config"
 	log "github.com/mpuzanov/bill18Go/logger"
-	"github.com/mpuzanov/bill18Go/util"
 )
 
-//Env Интерфейс для вызова функций sql
-type Env struct {
-	db  Datastore
-	cfg *config.Config
-}
+const (
+	userAPI    = "admin"
+	userAPIPsw = "admin"
+)
 
 //Bill18Server my http-server
 type Bill18Server struct {
 	server *http.Server
 	config *config.Config
 }
-
-var (
-	env *Env
-)
 
 //NewServer ...
 func NewServer(cfg *config.Config) *Bill18Server {
@@ -49,35 +44,52 @@ func NewServer(cfg *config.Config) *Bill18Server {
 	//=====================================================================
 
 	defaultServer := &http.Server{
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-		Addr:         cfg.Listen,
+		Addr:           cfg.Listen,
+		Handler:        nil,              // if nil use default http.DefaultServeMux
+		ReadTimeout:    10 * time.Second, // max duration reading entire request
+		WriteTimeout:   10 * time.Second, // max timing write response
+		IdleTimeout:    15 * time.Second, // max time wait for the next request
+		MaxHeaderBytes: 1 << 20,          // 2^20 or 128 kb
 	}
 	srv := &Bill18Server{
 		server: defaultServer,
 		config: cfg,
 	}
+
+	//router := http.NewServeMux()
 	router := mux.NewRouter()
 
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./public/static/"))))
+
+	// для отдачи сервером статичных файлов из папки public/static
+	//http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./public/static"))))
+
 	// static-files
-	// fileServer := http.FileServer(http.Dir("public"))
-	// http.Handle("/public/", http.StripPrefix("/public/", fileServer))
+	// fs := http.FileServer(http.Dir("./static/"))
+	// http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+	//fileServer := http.FileServer(http.Dir("./public/"))
+	//http.Handle("/static/", http.StripPrefix("/static/", fileServer))
 
 	//static-files-gorilla-mux
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	//router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+
+	// http.HandleFunc("/", handler)
+	// http.HandleFunc("/testapi", handlerTestapi)
+	// http.ListenAndServe(":8090", nil)
 
 	router.HandleFunc("/", env.homePage)
 	router.HandleFunc("/upload", env.upload)
 	router.HandleFunc("/testapi", env.testapi)
-	router.HandleFunc("/api/streets", logging(env.streetIndex))
-	router.HandleFunc("/api/builds", env.buildIndex)
-	router.HandleFunc("/api/flats", env.flatsIndex)
-	router.HandleFunc("/api/lics", env.licsIndex)
-	router.HandleFunc("/api/infoLic", env.infoLicIndex)
-	router.HandleFunc("/api/infoDataCounter", env.infoDataCounter)
-	router.HandleFunc("/api/infoDataCounterValue", env.infoDataCounterValue)
-	router.HandleFunc("/api/infoDataValue", env.infoDataValue)
-	router.HandleFunc("/api/infoDataPaym", env.infoDataPaym)
+	router.HandleFunc("/api/streets", BasicAuth(logger(env.streetIndex)))
+	router.HandleFunc("/api/builds", BasicAuth(logger(env.buildIndex)))
+	router.HandleFunc("/api/flats", BasicAuth(logger(env.flatsIndex)))
+	router.HandleFunc("/api/lics", BasicAuth(logger(env.licsIndex)))
+	router.HandleFunc("/api/infoLic", BasicAuth(logger(env.infoLicIndex)))
+	router.HandleFunc("/api/infoDataCounter", BasicAuth(logger(env.infoDataCounter)))
+	router.HandleFunc("/api/infoDataCounterValue", BasicAuth(logger(env.infoDataCounterValue)))
+	router.HandleFunc("/api/infoDataValue", BasicAuth(logger(env.infoDataValue)))
+	router.HandleFunc("/api/infoDataPaym", BasicAuth(logger(env.infoDataPaym)))
 	srv.server.Handler = router
 	return srv
 }
@@ -95,184 +107,61 @@ func (srv *Bill18Server) Shutdown() error {
 	return srv.server.Shutdown(ctx)
 }
 
-func logging(f http.HandlerFunc) http.HandlerFunc {
+func logger(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r.URL.Path)
-		f(w, r)
+
+		fmt.Printf("server [net/http] method [%s]  connection from [%v]\n", r.Method, r.RemoteAddr)
+
+		next.ServeHTTP(w, r)
 	}
 }
 
-//getJSONResponse Возвращаем информацию в JSON формате
-func (env *Env) getJSONResponse(w http.ResponseWriter, r *http.Request, data interface{}) {
-	jsData, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, "Error creating JSON response", http.StatusInternalServerError)
-		log.Error(err)
-		return
-	}
-	if env.cfg.IsPrettyJSON {
-		jsData, err = util.Prettyprint(jsData)
-		if err != nil {
-			log.Error(err)
+//BasicAuth ...
+func BasicAuth(handler http.HandlerFunc) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		realm := "Please enter your username and password"
+		user, pass, ok := r.BasicAuth()
+
+		if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(userAPI)) != 1 || subtle.ConstantTimeCompare([]byte(pass), []byte(userAPIPsw)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+			w.WriteHeader(401)
+			w.Write([]byte("You are Unauthorized to access the application.\n"))
+			return
 		}
+
+		handler(w, r)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsData)
 }
 
-func (env *Env) homePage(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("templates/index.html", "templates/header.html", "templates/footer.html")
-	if err != nil {
-		log.Error("template.ParseFiles", err.Error())
-		return
+//BasicAuth ...
+// func BasicAuth(next http.HandlerFunc) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+
+// 		auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+
+// 		if len(auth) != 2 || auth[0] != "Basic" {
+// 			http.Error(w, "authorization failed", http.StatusUnauthorized)
+// 			return
+// 		}
+
+// 		payload, _ := base64.StdEncoding.DecodeString(auth[1])
+// 		pair := strings.SplitN(string(payload), ":", 2)
+
+// 		if len(pair) != 2 || !validate(pair[0], pair[1]) {
+// 			http.Error(w, "authorization failed", http.StatusUnauthorized)
+// 			return
+// 		}
+
+// 		next.ServeHTTP(w, r)
+// 	}
+// }
+
+func validate(username, password string) bool {
+	if username == "test" && password == "test" { //Basic dGVzdDp0ZXN0
+		return true
 	}
-	t.ExecuteTemplate(w, "index", &struct{ Listen string }{env.cfg.Listen})
-}
-
-func (env *Env) testapi(w http.ResponseWriter, r *http.Request) {
-	t, err := template.ParseFiles("templates/testapi.html", "templates/header.html", "templates/footer.html")
-	if err != nil {
-		log.Error("template.ParseFiles", err.Error())
-		return
-	}
-	t.ExecuteTemplate(w, "testapi", &struct{ Listen string }{env.cfg.Listen})
-}
-
-func (env *Env) streetIndex(w http.ResponseWriter, r *http.Request) {
-	data, err := env.db.GetAllStreets()
-	if err != nil {
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-	log.Traceln("streetIndex")
-	env.getJSONResponse(w, r, data)
-}
-
-func (env *Env) buildIndex(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	streetName := r.FormValue("street_name")
-	data, err := env.db.GetBuilds(streetName)
-	if err != nil {
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-	log.Traceln("buildIndex", streetName)
-	env.getJSONResponse(w, r, data)
-}
-
-func (env *Env) flatsIndex(w http.ResponseWriter, r *http.Request) {
-	//r.ParseForm()
-	//log.Tracef("%v\n", r.Form)
-
-	streetName := r.FormValue("street_name")
-	nomDom := r.FormValue("nom_dom")
-	data, err := env.db.GetFlats(streetName, nomDom)
-	if err != nil {
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-
-	log.Traceln("flatsIndex", streetName, nomDom)
-	env.getJSONResponse(w, r, data)
-}
-
-func (env *Env) licsIndex(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-
-	streetName := r.FormValue("street_name")
-	nomDom := r.FormValue("nom_dom")
-	nomKvr := r.FormValue("nom_kvr")
-	data, err := env.db.GetKvrLic(streetName, nomDom, nomKvr)
-	if err != nil {
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-	log.Traceln("licsIndex", streetName, nomDom, nomKvr)
-	env.getJSONResponse(w, r, data)
-}
-
-func (env *Env) infoLicIndex(w http.ResponseWriter, r *http.Request) {
-	parOcc := r.FormValue("occ")
-	if parOcc == "" {
-		parOcc = "0"
-	}
-	occ, _ := strconv.Atoi(parOcc)
-
-	data, err := env.db.GetDataOcc(occ)
-	if err != nil {
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-	log.Traceln("infoLicIndex", parOcc)
-	env.getJSONResponse(w, r, data)
-}
-
-func (env *Env) infoDataCounter(w http.ResponseWriter, r *http.Request) {
-	parOcc := r.FormValue("occ")
-	if parOcc == "" {
-		parOcc = "0"
-	}
-	occ, _ := strconv.Atoi(parOcc)
-
-	data, err := env.db.GetCounterByOcc(occ)
-	if err != nil {
-		log.Errorf("infoDataCounter: %s\n", err)
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-	log.Traceln("infoDataCounter", parOcc)
-	env.getJSONResponse(w, r, data)
-}
-
-func (env *Env) infoDataCounterValue(w http.ResponseWriter, r *http.Request) {
-	parOcc := r.FormValue("occ")
-	if parOcc == "" {
-		parOcc = "0"
-	}
-	occ, _ := strconv.Atoi(parOcc)
-
-	data, err := env.db.GetCounterValueByOcc(occ)
-	if err != nil {
-		log.Errorf("infoDataCounterValue: %s\n", err)
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-	log.Traceln("infoDataCounterValue", parOcc)
-	env.getJSONResponse(w, r, data)
-}
-
-func (env *Env) infoDataValue(w http.ResponseWriter, r *http.Request) {
-	parOcc := r.FormValue("occ")
-	if parOcc == "" {
-		parOcc = "0"
-	}
-	occ, _ := strconv.Atoi(parOcc)
-
-	data, err := env.db.GetDataValueByOcc(occ)
-	if err != nil {
-		log.Errorf("infoDataValue: %s\n", err)
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-	log.Traceln("infoDataValue", parOcc)
-	env.getJSONResponse(w, r, data)
-}
-
-func (env *Env) infoDataPaym(w http.ResponseWriter, r *http.Request) {
-	parOcc := r.FormValue("occ")
-	if parOcc == "" {
-		parOcc = "0"
-	}
-	occ, _ := strconv.Atoi(parOcc)
-	data, err := env.db.GetDataPaymByOcc(occ)
-	if err != nil {
-		log.Errorf("infoDataPaym: %s\n", err)
-		http.Error(w, http.StatusText(500), 500)
-		return
-	}
-	log.Traceln("infoDataPaym", parOcc)
-	env.getJSONResponse(w, r, data)
+	return false
 }
 
 // upload logic
@@ -285,12 +174,12 @@ func (env *Env) upload(w http.ResponseWriter, r *http.Request) {
 		token := fmt.Sprintf("%x", h.Sum(nil))
 		//fmt.Println("token:", token)
 
-		t, err := template.ParseFiles("templates/upload.html", "templates/header.html", "templates/footer.html")
+		t, err := template.ParseFiles("templates/base.html", "templates/header.html", "templates/upload.html")
 		if err != nil {
 			log.Error("template.ParseFiles", err.Error())
 			return
 		}
-		t.ExecuteTemplate(w, "Upload", &struct {
+		t.ExecuteTemplate(w, "base", &struct {
 			Listen string
 			Token  string
 		}{env.cfg.Listen, token})

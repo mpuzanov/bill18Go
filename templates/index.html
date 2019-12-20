@@ -1,8 +1,5 @@
-{{ define "index" }} {{ template "header" }}
-<div class="container">
-        <div class="col-xs-12">
-                <a href="http://{{.Listen}}/upload" target="_blank">Загрузка файлов</a><br />
-        </div>
+{{define "content"}}
+<div class="col-xs-12">
+    <a href="http://{{.Listen}}/upload" target="_blank">Загрузка файлов</a><br />
 </div>
-<!--class="container"-->
-{{ template "footer" }} {{ end }}
+{{end}}
