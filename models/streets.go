@@ -6,10 +6,10 @@ import (
 
 //Street Улица
 type Street struct {
-	StreetName string `json:"name"`
+	StreetName string `json:"name" db:"name"`
 }
 
-//ToString Строковое представление Платежа
-func (zap *Street) ToString() string {
+//String Строковое представление
+func (zap *Street) String() string {
 	return fmt.Sprintf("%s", zap.StreetName)
 }

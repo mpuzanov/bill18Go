@@ -14,3 +14,6 @@
 *.out
 /.vscode
 /loadfiles
+
+# программа в Linux
+bill18go 

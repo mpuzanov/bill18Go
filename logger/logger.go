@@ -30,7 +30,7 @@ func SetupLogger(cfg *config.Config) error {
 	if cfg.LogToFile {
 		file, err := os.OpenFile(cfg.LogFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err == nil {
-			Logger.Println("logToFile: ", cfg.LogFileName)
+			Logger.Printf("logToFile: %s  http-server: %s", cfg.LogFileName, cfg.Listen)
 			Logger.Out = file
 		} else {
 			Logger.Info("Failed to log to file, using default stderr")

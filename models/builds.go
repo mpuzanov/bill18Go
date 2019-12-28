@@ -3,8 +3,8 @@ package models
 //Build Дом
 type Build struct {
 	Street     `json:"-"`
-	NomDom     string `json:"nom_dom"`
-	NomDomSort string `json:"nom_dom_sort"`
+	NomDom     string `json:"nom_dom" db:"nom_dom"`
+	NomDomSort string `json:"nom_dom_sort" db:"nom_dom_sort"`
 }
 
 //Builds Дома
