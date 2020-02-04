@@ -1,20 +1,21 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/mpuzanov/bill18Go/config"
-	"github.com/mpuzanov/bill18Go/controllers"
-	"github.com/mpuzanov/bill18Go/logger"
+	"github.com/mpuzanov/bill18Go/internal/config"
+	"github.com/mpuzanov/bill18Go/internal/controller"
 
 	_ "github.com/denisenkom/go-mssqldb"
-	log "github.com/mpuzanov/bill18Go/logger"
+
+	"github.com/mpuzanov/bill18Go/internal/logger"
 )
 
 const (
-	configFileName = "conf.yaml"
+	configFileName = "conf.yml"
 )
 
 func main() {
@@ -25,20 +26,29 @@ func main() {
 		log.Fatalf("Не удалось загрузить %s: %s", configFileName, err)
 	}
 
+	// get port env var
+	portEnv := os.Getenv("PORT")
+	if len(portEnv) > 0 {
+		cfg.Port = portEnv
+		cfg.Listen = cfg.IP + ":" + cfg.Port
+	}
+	DatabaseURLEnv := os.Getenv("DatabaseURL")
+	if len(DatabaseURLEnv) > 0 {
+		cfg.DatabaseURL = DatabaseURLEnv
+	}
 	//инициализируем логгеры
 	if err = logger.SetupLogger(cfg); err != nil {
 		log.Fatal(err)
 	}
 
-	srv := controllers.NewServer(cfg)
+	srv := controller.NewServer(cfg)
 	go srv.Start()
 
 	//ожидаем завершение программы по Ctrl-C
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt)
-	signal.Notify(sigChan, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
-	log.Info("CTRL-C: Завершаю работу.")
+	logger.Info("CTRL-C: Завершаю работу.")
 	srv.Shutdown()
-	log.Info("Shutdown done")
+	logger.Info("Shutdown done")
 }

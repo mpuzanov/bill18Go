@@ -1,0 +1,27 @@
+{{ define "content" }}
+
+<form class="form-horizontal" role="form" action="http://{{.Listen}}/login" method="post">
+    <div class="form-group form-group-lg">
+        <label for="Email_user" class="col-sm-2 controllabel">
+            Логин</label>
+        <div class="col-sm-4">
+            <input type="email" class="form-control" id="Email_user" placeholder="Email или логин">
+        </div>
+    </div>
+    <div class="form-group form-group-sm">
+        <label for="inputPassword" class="col-sm-2 controllabel">
+            Пароль</label>
+        <div class="col-sm-4">
+            <input type="password" class="form-control" id="inputPassword" placeholder="Пароль">
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-2 col-sm-4">
+            <button type="submit" class="btn btn-primary"> Войти
+            </button>
+        </div>
+    </div>
+</form>
+
+</div>
+{{ end }}

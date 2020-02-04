@@ -1,0 +1,18 @@
+#адрес:порт на котором будет работать веб-сервера
+ip: 127.0.0.1
+port: 8090
+#Уровень отладки. Влияет на содержимое сообщений в логе
+#Допустимые значения: Trace, Debug, Info, Warning, Error, Fatal, Panic
+loglevel: Trace
+#Установка логирования в файл 
+logToFile: true
+logFileName: logs/workfile.log
+
+#Формируем JSON с отступами
+isPrettyJSON: true
+# Формат подключения к базе данных: sqlserver://User:Password@Server:Port?database=Database
+database_url: "sqlserver://sa:123@localhost:1433?database=kv_all"
+#database_url: "sqlserver://sa:123@192.168.56.1:1433?database=kv_all"
+#database_url: "sqlserver://sa:123@192.168.0.104:1433?database=kv_all"
+#database_url: "sqlserver://sa:123@192.168.0.62:1433?database=kv_all"
+#database_url: "sqlserver://sa:dnypr1@192.168.5.111:1433?database=kv_all"

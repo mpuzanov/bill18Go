@@ -16,4 +16,6 @@
 /loadfiles
 
 # программа в Linux
-bill18go 
+/bill18go
+
+go.sum
