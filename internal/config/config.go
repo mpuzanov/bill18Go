@@ -1,18 +1,10 @@
 package config
 
 import (
-	"errors"
 	"io/ioutil"
 
 	"github.com/go-yaml/yaml"
 )
-
-var (
-	configModtime  int64
-	errNotModified = errors.New("Not modified")
-)
-
-//var Config appConfig //type appConfig struct {
 
 //Config - структура для считывания конфигурационного файла
 type Config struct {

@@ -1,8 +1,15 @@
 .DEFAULT_GOAL = build
 APP=bill18go
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-
 PKGS := . ./internal
+GO_SRC_DIRS := $(shell \
+	find . -name "*.go" -not -path "./vendor/*" | \
+	xargs -I {} dirname {}  | \
+	uniq)
+GO_TEST_DIRS := $(shell \
+	find . -name "*_test.go" -not -path "./vendor/*" | \
+	xargs -I {} dirname {}  | \
+	uniq)	
 
 build:
 	go build -v ./
@@ -11,13 +18,11 @@ run:
 	go run .
 
 test:
-	go test -v -race -timeout 30s ./...
+	go test -v -timeout 30s ${GO_TEST_DIRS}
 
 lint:
-	goimports -local "github.com/mpuzanov/bill18Go" -l . | xargs goimports  -local "github.com/mpuzanov/bill18Go" -w
-
-	goimports -w main.go
-	golangci-lint run
+	@goimports -w ${GO_SRC_DIRS}
+	@golangci-lint run
 
 image:
 	docker build -t puzanovma/bill18go . 

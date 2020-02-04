@@ -104,14 +104,12 @@ func (srv *Bill18Server) Shutdown() error {
 	return srv.server.Shutdown(ctx)
 }
 
-func logger(next http.HandlerFunc, cfg *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		fmt.Printf("server [net/http] method [%s]  connection from [%v]\n", r.Method, r.RemoteAddr)
-
-		next.ServeHTTP(w, r)
-	}
-}
+// func logger(next http.HandlerFunc, cfg *config.Config) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		fmt.Printf("server [net/http] method [%s]  connection from [%v]\n", r.Method, r.RemoteAddr)
+// 		next.ServeHTTP(w, r)
+// 	}
+// }
 
 //BasicAuth ...
 func BasicAuth(handler http.HandlerFunc) http.HandlerFunc {
@@ -133,10 +131,8 @@ func BasicAuth(handler http.HandlerFunc) http.HandlerFunc {
 }
 
 func validate(username, password string) bool {
-	if usersAPI[username] == password { //Basic dGVzdDp0ZXN0
-		return true
-	}
-	return false
+	//Basic dGVzdDp0ZXN0
+	return usersAPI[username] == password
 }
 
 // upload logic

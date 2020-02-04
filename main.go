@@ -48,7 +48,7 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
-	logger.Info("CTRL-C: Завершаю работу.")
+	logger.Info("Shutting down ...")
 	srv.Shutdown()
 	logger.Info("Shutdown done")
 }
