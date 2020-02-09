@@ -27,7 +27,11 @@ func (db *DB) GetBuilds(streetName string) (*model.Builds, error) {
 
 	builds := model.Builds{}
 	builds.StreetName = streetName
-	err := db.Select(&builds.DataBuilds, "k_show_build @street_name1", sql.Named("street_name1", streetName))
+
+	params := map[string]interface{}{"street_name1": streetName}
+	nstmt, err := db.PrepareNamed(`k_show_build @street_name1=:street_name1`)
+	err = nstmt.Select(&builds.DataBuilds, params)
+	//err := db.Select(&builds.DataBuilds, "k_show_build @street_name1", sql.Named("street_name1", streetName))
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -41,10 +45,15 @@ func (db *DB) GetFlats(streetName, nomDom string) (*model.Flats, error) {
 	flats := model.Flats{}
 	flats.StreetName = streetName
 	flats.NomDom = nomDom
-	err := db.Select(&flats.DataKvr, "k_show_kvr @street_name1,@nom_dom1",
-		sql.Named("street_name1", streetName),
-		sql.Named("nom_dom1", nomDom),
-	)
+
+	params := map[string]interface{}{"street_name1": streetName, "nom_dom1": nomDom}
+	nstmt, err := db.PrepareNamed(`k_show_kvr @street_name1=:street_name1, @nom_dom1=:nom_dom1`)
+	err = nstmt.Select(&flats.DataKvr, params)
+
+	// err := db.Select(&flats.DataKvr, "k_show_kvr @street_name1,@nom_dom1",
+	// 	sql.Named("street_name1", streetName),
+	// 	sql.Named("nom_dom1", nomDom),
+	// )
 	if err != nil {
 		log.Error(err)
 		return nil, err
