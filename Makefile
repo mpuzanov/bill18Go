@@ -1,4 +1,5 @@
 .DEFAULT_GOAL = build
+SOURCE=./cmd/bill18go
 APP=bill18go
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PKGS := . ./internal
@@ -12,10 +13,10 @@ GO_TEST_DIRS := $(shell \
 	uniq)	
 
 build:
-	go build -v ./
+	go build -v -o ${APP} ${SOURCE}
 
 run: 
-	go run .
+	go run ${SOURCE} --config=configs/config-prod.yaml
 
 test:
 	go test -v -timeout 30s ${GO_TEST_DIRS}
@@ -25,20 +26,16 @@ lint:
 	@golangci-lint run
 
 image:
-	docker build -t puzanovma/bill18go . 
+	docker build -t puzanovma/bill18go -f deployments/. 
 
 rundock:
-	#docker run --rm -it -e "PORT=5000" -v $$(pwd)/logs:/app/logs:rw -p 5000:5000 puzanovma/bill18go
-	docker run --rm -it -e "PORT=5000" -v $$(pwd)/logs:/app/logs:rw -p 5000:5000 puzanovma/bill18go-scratch
+	docker run --rm -it -e "DB_PASSWORD=dnypr1" -p 8090:8090 puzanovma/bill18go
 
 release:
-	#GOOS=windows GOARCH=amd64 go build -o ${APP}.exe main.go
-	#CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${APP} main.go
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ${APP} main.go
+	GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui" -o ${APP}.exe ./cmd/${APP}
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o ${APP} ./cmd/${APP}
 
-buildwin:
-	go build -ldflags="-H windowsgui"
 
 .DEFAULT_GOAL := build
 
-.PHONY: build run test release
+.PHONY: build run test release lint image rundock

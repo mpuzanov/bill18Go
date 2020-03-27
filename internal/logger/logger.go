@@ -21,16 +21,16 @@ func init() {
 
 //SetupLogger ...
 func SetupLogger(cfg *config.Config) error {
-	level, err := logrus.ParseLevel(cfg.LogLevel)
+	level, err := logrus.ParseLevel(cfg.Log.Level)
 	if err != nil {
 		Logger.Error(err)
 	}
 	Logger.SetLevel(level)
 
-	if cfg.LogToFile {
-		file, err := os.OpenFile(cfg.LogFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if cfg.Log.File != "" {
+		file, err := os.OpenFile(cfg.Log.File, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err == nil {
-			Logger.Printf("logToFile: %s  http-server: %s", cfg.LogFileName, cfg.IP+":"+cfg.Port)
+			Logger.Printf("logToFile: %s  http-server: %s", cfg.Log.File, cfg.Host+":"+cfg.Port)
 			Logger.Out = file
 		} else {
 			Logger.Info("Failed to log to file, using default stderr")
