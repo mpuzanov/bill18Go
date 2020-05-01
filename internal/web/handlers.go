@@ -290,16 +290,16 @@ func (s *myHandler) InfoDataPaym(w http.ResponseWriter, r *http.Request) {
 func (s *myHandler) PuAddValue(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	puIDStr := vars["puId"]
-	s.logger.Debug("PuDelValue", zap.String("puId", puIDStr))
 	puID, err := strconv.Atoi(puIDStr)
 	if err != nil {
-		s.logger.Error(err.Error())
+		s.logger.Error("PuAddValue. ошибка конвертации параметра puID", zap.Error(err))
 	}
 	valueStr := vars["value"]
 	value, err := strconv.Atoi(valueStr)
 	if err != nil {
-		s.logger.Error(err.Error())
+		s.logger.Error("PuAddValue. ошибка конвертации параметра value", zap.Error(err))
 	}
+	s.logger.Debug("PuAddValue", zap.String("puId", puIDStr), zap.String("value", valueStr))
 	//valueDateStr := vars["valueDate"]
 
 	data, err := s.Db.PuAddValue(puID, value)
@@ -308,6 +308,7 @@ func (s *myHandler) PuAddValue(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
+	s.logger.Sugar().Debugf("data: %+v", data)
 	s.getJSONResponse(w, r, data)
 }
 
@@ -318,14 +319,15 @@ func (s *myHandler) PuDelValue(w http.ResponseWriter, r *http.Request) {
 	s.logger.Debug("PuDelValue", zap.String("puIDStr", puIDStr))
 	puID, err := strconv.Atoi(puIDStr)
 	if err != nil {
-		s.logger.Error("PuDelValue", zap.String("error", err.Error()))
+		s.logger.Error("PuDelValue. ошибка конвертации параметра puID", zap.Error(err))
 	}
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		s.logger.Error(err.Error())
+		s.logger.Error("PuDelValue. ошибка конвертации параметра id", zap.Error(err))
 	}
 	//valueDateStr := vars["valueDate"]
+	s.logger.Debug("PuDelValue", zap.String("puId", puIDStr), zap.String("id", idStr))
 
 	data, err := s.Db.PuDelValue(puID, id)
 	if err != nil {
@@ -333,6 +335,7 @@ func (s *myHandler) PuDelValue(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
+	s.logger.Sugar().Debugf("data: %+v", data)
 	s.getJSONResponse(w, r, data)
 }
 

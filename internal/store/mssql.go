@@ -188,7 +188,7 @@ func (s *DB) PuAddValue(puID int, value int) (*model.Result, error) {
 		sql.Named("puID", puID),
 		sql.Named("value", value),
 	)
-	//log.Traceln("PuAddValue data:", &data)
+	//log.Println("PuAddValue data:", &data)
 	if err == sql.ErrNoRows {
 		return &data, nil
 	}
