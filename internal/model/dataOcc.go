@@ -18,6 +18,10 @@ type DataOcc struct {
 	CV1           int     `json:"CV1,omitempty" db:"CV1"`
 	CV2           int     `json:"CV2,omitempty" db:"CV2"`
 	Rejim         string  `json:"rejim,omitempty" db:"Rejim"`
+	TownName      string  `json:"town_name,omitempty" db:"town_name"`
+	StreetName    string  `json:"street_name,omitempty" db:"street_name"`
+	NomDom        string  `json:"nom_dom,omitempty" db:"nom_dom"`
+	Nomkvr        string  `json:"nom_kvr,omitempty" db:"nom_kvr"`
 }
 
 //ToString Строковое представление

@@ -9,6 +9,7 @@ type DataCounter struct {
 	Occ          int     `json:"lic,omitempty" db:"lic"`
 	CounterID    int     `json:"counter_id,omitempty" db:"counter_id"`
 	ServName     string  `json:"serv_name,omitempty" db:"serv_name"`
+	ServiceId    string  `json:"service_id,omitempty" db:"service_id"`
 	SerialNumber string  `json:"serial_number,omitempty" db:"serial_number"`
 	CounterType  string  `json:"counter_type,omitempty" db:"type"`
 	MaxValue     int     `json:"max_value,omitempty" db:"max_value"`
