@@ -21,9 +21,14 @@ run:
 test:
 	go test -v -timeout 30s ${GO_TEST_DIRS}
 
+mod:
+	go mod verify
+	go mod tidy
+
 lint:
 	@goimports -w ${GO_SRC_DIRS}
-	@golangci-lint run
+	@gofmt -s -w ${GO_SRC_DIRS}
+	@golint ${GO_SRC_DIRS}	
 
 image:
 	docker build -t puzanovma/bill18go -f deployments/. 

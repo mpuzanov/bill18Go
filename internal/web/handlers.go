@@ -1,12 +1,12 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"html/template"
 	"net/http"
 	"strconv"
 
-	"github.com/mpuzanov/bill18Go/internal/util"
 	"go.uber.org/zap"
 
 	"github.com/gorilla/mux"
@@ -91,6 +91,13 @@ func (s *myHandler) configRouter() {
 
 }
 
+//Prettyprint Делаем красивый json с отступами
+func Prettyprint(b []byte) ([]byte, error) {
+	var out bytes.Buffer
+	err := json.Indent(&out, b, "", "    ")
+	return out.Bytes(), err
+}
+
 //getJSONResponse Возвращаем информацию в JSON формате
 func (s *myHandler) getJSONResponse(w http.ResponseWriter, r *http.Request, data interface{}) {
 	jsData, err := json.Marshal(data)
@@ -100,7 +107,7 @@ func (s *myHandler) getJSONResponse(w http.ResponseWriter, r *http.Request, data
 		return
 	}
 	if s.cfg.IsPrettyJSON {
-		jsData, err = util.Prettyprint(jsData)
+		jsData, err = Prettyprint(jsData)
 		if err != nil {
 			s.logger.Error(err.Error())
 		}

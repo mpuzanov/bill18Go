@@ -18,7 +18,7 @@ func (mdb *MockDB) GetAllStreets() (*[]model.Street, error) {
 //GetBuilds ...
 func (mdb *MockDB) GetBuilds(streetName string) (*model.Builds, error) {
 	tbl := &model.Builds{StreetName: "1-я Донская ул.",
-		DataBuilds: []model.Build{model.Build{Street: model.Street{StreetName: "1-я Донская ул."}, NomDom: "6", NomDomSort: "       6"}}}
+		DataBuilds: []model.Build{{Street: model.Street{StreetName: "1-я Донская ул."}, NomDom: "6", NomDomSort: "       6"}}}
 	return tbl, nil
 }
 
