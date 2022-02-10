@@ -4,3 +4,10 @@ release
 .log
 .bat
 .git
+.dockerignore
+.gitignore
+.env*
+*Dockerfile*
+README.md
+docker-compose*.yml
+Makefile

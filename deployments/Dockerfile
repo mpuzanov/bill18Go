@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine AS builder
+FROM golang:1.17-alpine AS builder
 ENV APP_NAME bill18go
 RUN apk add --no-cache tzdata \
     && apk add -U --no-cache ca-certificates \
@@ -8,7 +8,7 @@ COPY . .
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/bill18go ./cmd/${APP_NAME}
 
-FROM alpine:1.13
+FROM alpine:1.17
 ENV APP_NAME bill18go
 LABEL name=${APP_NAME} maintainer="Mikhail Puzanov <mpuzanov@mail.ru>" version="1"
 WORKDIR /app/${APP_NAME}
