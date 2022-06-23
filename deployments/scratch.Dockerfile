@@ -1,5 +1,5 @@
 ############################
-FROM golang:1.17-alpine AS builder
+FROM golang:1.18-alpine AS builder
 ENV APP_NAME bill18go
 RUN apk add --no-cache tzdata \
     && apk add -U --no-cache ca-certificates \
