@@ -8,7 +8,7 @@ COPY . .
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /bin/bill18go ./cmd/${APP_NAME}
 
-FROM alpine:1.17
+FROM alpine:3.15.0
 ENV APP_NAME bill18go
 LABEL name=${APP_NAME} maintainer="Mikhail Puzanov <mpuzanov@mail.ru>" version="1"
 WORKDIR /app/${APP_NAME}

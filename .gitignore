@@ -19,5 +19,6 @@
 
 # программа в Linux
 bill18go
+!cmd/bill18go
 
 go.sum
